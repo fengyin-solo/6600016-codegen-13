@@ -12,3 +12,13 @@ export interface HistoryEntry {
   correct: boolean
   timestamp: number
 }
+
+export interface Phrase {
+  id: number
+  text: string
+  category: string
+  createdAt: number
+  timesUsed: number
+}
+
+export type TrainingModeType = 'char' | 'phrase'

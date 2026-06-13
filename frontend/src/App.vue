@@ -3,7 +3,7 @@
     <h1 class="text-3xl font-bold text-amber-400">莫尔斯码实时训练与通讯器</h1>
 
     <!-- Tabs -->
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
       <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
         class="px-4 py-2 rounded text-sm font-medium"
         :class="activeTab === tab.id ? 'bg-amber-500 text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'">
@@ -37,9 +37,14 @@
       <WaveformDisplay />
     </div>
 
+    <!-- Phrase Library -->
+    <div v-if="activeTab === 'phrases'" class="flex flex-col gap-4">
+      <PhraseLibrary />
+    </div>
+
     <!-- Training Mode -->
     <div v-if="activeTab === 'train'" class="flex flex-col gap-4">
-      <TrainingMode />
+      <TrainingMode @switch-tab="activeTab = $event" />
     </div>
 
     <!-- Reference Table -->
@@ -78,12 +83,14 @@ import { useMorseStore } from './store/morse'
 import { MORSE_TABLE } from './utils/morse-code'
 import WaveformDisplay from './components/WaveformDisplay.vue'
 import TrainingMode from './components/TrainingMode.vue'
+import PhraseLibrary from './components/PhraseLibrary.vue'
 
 const store = useMorseStore()
 const morseTable = MORSE_TABLE
 
 const tabs = [
   { id: 'translate', label: '编码/解码' },
+  { id: 'phrases', label: '📚 短语速记库' },
   { id: 'train', label: '训练模式' },
   { id: 'ref', label: '速查表' },
 ]
