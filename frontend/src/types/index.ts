@@ -22,3 +22,5 @@ export interface Phrase {
 }
 
 export type TrainingModeType = 'char' | 'phrase'
+
+export type PhraseSubMode = 'audioToText' | 'codeToText'

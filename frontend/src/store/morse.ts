@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { MORSE_TABLE, REVERSE_TABLE, textToMorse, morseToText } from '../utils/morse-code'
-import type { TrainMode, HistoryEntry, Phrase, TrainingModeType } from '../types'
+import type { TrainMode, HistoryEntry, Phrase, TrainingModeType, PhraseSubMode } from '../types'
 
 const DEFAULT_PHRASES: Phrase[] = [
   { id: 1, text: 'SOS', category: '紧急信号', createdAt: Date.now(), timesUsed: 0 },
@@ -44,6 +44,9 @@ export const useMorseStore = defineStore('morse', () => {
   const quizPhrase = ref('')
   const phraseInputText = ref('')
   const phraseCategory = ref('通用')
+  const phraseSubMode = ref<PhraseSubMode>('audioToText')
+  const phraseAnswerRevealed = ref(false)
+  const lastPhraseCorrect = ref<boolean | null>(null)
 
   const categories = computed(() => {
     const set = new Set(phrases.value.map(p => p.category))
@@ -53,6 +56,20 @@ export const useMorseStore = defineStore('morse', () => {
   const queuedPhrases = computed(() =>
     phrases.value.filter(p => trainingQueue.value.includes(p.id))
   )
+
+  const quizPhraseCategory = computed(() => {
+    const phrase = phrases.value.find(p => p.text === quizPhrase.value)
+    return phrase?.category || ''
+  })
+
+  const quizPhraseHint = computed(() => {
+    if (!quizPhrase.value) return ''
+    const text = quizPhrase.value
+    const words = text.split(' ')
+    return `${words.length} 个词 · ${text.replace(/ /g, '').length} 个字母`
+  })
+
+  const quizPhraseMorse = computed(() => textToMorse(quizPhrase.value))
 
   const dotDuration = computed(() => 1200 / wpm.value)
 
@@ -198,6 +215,8 @@ export const useMorseStore = defineStore('morse', () => {
     const phrase = phrases.value.find(p => p.id === phraseId)
     quizPhrase.value = phrase ? phrase.text : ''
     userAnswer.value = ''
+    phraseAnswerRevealed.value = false
+    lastPhraseCorrect.value = null
   }
 
   function checkPhraseAnswer() {
@@ -211,7 +230,21 @@ export const useMorseStore = defineStore('morse', () => {
       correct,
       timestamp: Date.now(),
     })
-    generatePhraseQuiz()
+    lastPhraseCorrect.value = correct
+    phraseAnswerRevealed.value = true
+  }
+
+  function revealPhraseAnswer() {
+    phraseAnswerRevealed.value = true
+    score.value.total++
+    history.value.unshift({
+      id: Date.now(),
+      input: quizPhrase.value,
+      output: '(跳过)',
+      correct: false,
+      timestamp: Date.now(),
+    })
+    lastPhraseCorrect.value = false
   }
 
   return {
@@ -221,9 +254,10 @@ export const useMorseStore = defineStore('morse', () => {
     generateQuiz, checkAnswer, resetScore,
     phrases, trainingQueue, trainingModeType, currentPhraseIndex,
     quizPhrase, phraseInputText, phraseCategory,
-    categories, queuedPhrases,
+    phraseSubMode, phraseAnswerRevealed, lastPhraseCorrect,
+    categories, queuedPhrases, quizPhraseCategory, quizPhraseHint, quizPhraseMorse,
     addPhrase, removePhrase, toggleQueue, clearQueue, addAllToQueue,
     playPhrase, getPhraseMorse, loadPhraseToInput,
-    generatePhraseQuiz, checkPhraseAnswer,
+    generatePhraseQuiz, checkPhraseAnswer, revealPhraseAnswer,
   }
 })
